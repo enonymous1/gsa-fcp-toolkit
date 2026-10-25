@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gsa-fcp-toolkit"
+version = "0.1.0"
+description = "GSA FCP (Federal Supply Schedule) pricing update toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "xlwings>=0.32",      # Excel template processing (Windows/macOS only)
+    "python-docx>=1.1",   # Commercial Price List Word document generation
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+# Console entry points (wired in Phase 7):
+[project.scripts]
+gsa-fcp = "gsa_fcp_toolkit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]  # line length handled by formatter, not the linter
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+show_error_codes = true
+
+# python-docx ships no type hints; treat it as untyped rather than failing.
+[[tool.mypy.overrides]]
+module = "docx.*"
+ignore_missing_imports = true
