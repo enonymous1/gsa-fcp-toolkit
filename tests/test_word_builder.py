@@ -21,7 +21,7 @@ ITEMS = [
 def test_generate_proposal_cpl(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "OUTPUT_DIR", tmp_path)
     out = generate_word_cpl("proposal", ITEMS)
-    assert out == tmp_path / "Millennium_Partners_Proposal_CPL.docx"
+    assert out == tmp_path / "Proposal_CPL.docx"
     assert out.is_file()
 
     doc = Document(str(out))
@@ -34,12 +34,20 @@ def test_generate_proposal_cpl(tmp_path, monkeypatch):
 def test_generate_fss_cpl_uses_gsa_rate(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "OUTPUT_DIR", tmp_path)
     out = generate_word_cpl("fss", ITEMS)
-    assert out == tmp_path / "Millennium_Partners_Authorized_FSS_Pricelist.docx"
+    assert out == tmp_path / "Authorized_FSS_Pricelist.docx"
 
     doc = Document(str(out))
     table = doc.tables[0]
     assert table.rows[0].cells[2].text == "GSA Hourly Rate (w/ IFF)"
     assert table.rows[1].cells[2].text == "$95.00"
+
+
+def test_company_placeholder_appears_in_document(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "OUTPUT_DIR", tmp_path)
+    out = generate_word_cpl("proposal", ITEMS)
+    doc = Document(str(out))
+    full_text = "\n".join(p.text for p in doc.paragraphs)
+    assert "[ENTER COMPANY NAME]" in full_text
 
 
 def test_generate_word_cpl_rejects_bad_type(tmp_path, monkeypatch):

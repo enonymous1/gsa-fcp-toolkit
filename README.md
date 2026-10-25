@@ -60,17 +60,22 @@ input file.
 
 ## Configuration
 
-Directories are overridable via environment (copy `.env.example` to `.env`
-or export them directly):
+Directories and company identity are overridable via environment (copy
+`.env.example` to `.env` or export them directly):
 
 | Variable | Default |
 | -------- | ------- |
 | `GSA_DATA_DIR` | `./data` |
 | `GSA_TEMPLATE_DIR` | `./templates` |
 | `GSA_OUTPUT_DIR` | `./output` |
+| `GSA_COMPANY_NAME` | `[ENTER COMPANY NAME]` |
+| `GSA_COMPANY_LOCATION` | `[ENTER CITY, STATE]` |
+| `GSA_COMPANY_POC` | `[ENTER POINT OF CONTACT]` |
+| `GSA_PAYMENT_TERMS` | `Net 30` |
 
-Business constants (IFF rate, company details, document styling, output
-filenames) live in `src/gsa_fcp_toolkit/config.py`.
+Unset company values render as red `[BRACKETED]` manual entries in the
+generated Word documents — set them to brand the output. Other business
+constants (IFF rate, document styling) live in `src/gsa_fcp_toolkit/config.py`.
 
 ## Project layout
 

@@ -26,6 +26,12 @@ def _get_env_path(var_name: str, default_path: Path) -> Path:
     return Path(env_val) if env_val else default_path
 
 
+def _get_env_str(var_name: str, default: str) -> str:
+    """Return ``os.environ[var_name]`` when set and non-empty, else ``default``."""
+    env_val = os.getenv(var_name)
+    return env_val if env_val else default
+
+
 # Core directories (overridable via environment)
 DATA_DIR = _get_env_path("GSA_DATA_DIR", BASE_DIR / "data")
 TEMPLATE_DIR = _get_env_path("GSA_TEMPLATE_DIR", BASE_DIR / "templates")
@@ -66,13 +72,17 @@ TITLE_KEY: Literal["title"] = "title"
 # =============================================================================
 IFF_RATE = 0.0075  # GSA Industrial Funding Fee, used when deriving offered rates
 
-COMPANY_NAME = "Millennium Partners"
-COMPANY_LOCATION = "Spotsylvania, Virginia"
-COMPANY_POC = "Justin, IT Manager"
-PAYMENT_TERMS = "Net 30"
+# Company identity: overridable via environment so any organization can use
+# this toolkit. Defaults are [BRACKETED] placeholders, which the Word builder
+# renders in red bold as manual entries (same as the other placeholders).
+COMPANY_NAME = _get_env_str("GSA_COMPANY_NAME", "[ENTER COMPANY NAME]")
+COMPANY_LOCATION = _get_env_str("GSA_COMPANY_LOCATION", "[ENTER CITY, STATE]")
+COMPANY_POC = _get_env_str("GSA_COMPANY_POC", "[ENTER POINT OF CONTACT]")
+PAYMENT_TERMS = _get_env_str("GSA_PAYMENT_TERMS", "Net 30")
 
-PROPOSAL_CPL_FILENAME = "Millennium_Partners_Proposal_CPL.docx"
-FSS_PRICELIST_FILENAME = "Millennium_Partners_Authorized_FSS_Pricelist.docx"
+# Generic output filenames (not branded to any one company).
+PROPOSAL_CPL_FILENAME = "Proposal_CPL.docx"
+FSS_PRICELIST_FILENAME = "Authorized_FSS_Pricelist.docx"
 
 # =============================================================================
 # DOCUMENT STYLING (RGB tuples; the word subpackage converts them to RGBColor)

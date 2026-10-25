@@ -21,6 +21,25 @@ def test_env_fallback(monkeypatch):
     assert config._get_env_path("GSA_DATA_DIR", Path("/default")) == Path("/default")
 
 
+def test_env_str_override(monkeypatch):
+    monkeypatch.setenv("GSA_COMPANY_NAME", "Acme Corp")
+    assert config._get_env_str("GSA_COMPANY_NAME", "default") == "Acme Corp"
+
+
+def test_env_str_fallback(monkeypatch):
+    monkeypatch.delenv("GSA_COMPANY_NAME", raising=False)
+    assert config._get_env_str("GSA_COMPANY_NAME", "default") == "default"
+    monkeypatch.setenv("GSA_COMPANY_NAME", "")
+    assert config._get_env_str("GSA_COMPANY_NAME", "default") == "default"
+
+
+def test_company_defaults_are_placeholders():
+    assert config.COMPANY_NAME == "[ENTER COMPANY NAME]"
+    assert config.COMPANY_LOCATION == "[ENTER CITY, STATE]"
+    assert config.COMPANY_POC == "[ENTER POINT OF CONTACT]"
+    assert config.PAYMENT_TERMS == "Net 30"
+
+
 def test_business_constants():
     assert config.IFF_RATE == 0.0075
     assert config.EXPECTED_TEMPLATE_VERSION == "1.1-20260602"

@@ -43,9 +43,7 @@ def build_proposal_header(doc: DocxDocument) -> None:
     add_paragraph_with_placeholders(
         doc, f"Corporate Address: {config.COMPANY_LOCATION} [ENTER FULL STREET ADDRESS]"
     )
-    add_paragraph_with_placeholders(
-        doc, f"Point of Contact: {config.COMPANY_POC} (or [ENTER PREFERRED ADMINISTRATIVE POC])"
-    )
+    add_paragraph_with_placeholders(doc, f"Point of Contact: {config.COMPANY_POC}")
     add_paragraph_with_placeholders(doc, "Unique Entity Identifier (UEI): [ENTER UEI NUMBER]")
     doc.add_paragraph()
 
@@ -189,7 +187,9 @@ def generate_word_cpl(document_type: str, labor_data: list[LaborItem]) -> Path:
             " These rates are authorized GSA schedule rates "
             "inclusive of the Industrial Funding Fee (IFF)."
         )
-    intro_para = doc.add_paragraph(intro_txt)
+    # Routed through the placeholder helper so a placeholder company name
+    # renders in red bold, like every other manual entry in these documents.
+    intro_para = add_paragraph_with_placeholders(doc, intro_txt)
     intro_para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
     doc.add_paragraph()  # spacing
