@@ -54,7 +54,13 @@ DATA_START_ROW = 4  # first record row (row 3 holds instructions)
 
 # Template versioning
 VERSION_CELL = "B2"
-EXPECTED_TEMPLATE_VERSION = "1.1-20260602"
+# Template versions the tool knows how to handle, oldest → newest. The two
+# shipped GSA releases share the same 60-column Pricing layout, so both are
+# accepted; anything else fails validation with the known list (see
+# ExcelProcessor.validate_template_version). Add a new version here only
+# after verifying its structure matches.
+SUPPORTED_TEMPLATE_VERSIONS = ("1.1-20260128", "1.1-20260602")
+LATEST_TEMPLATE_VERSION = SUPPORTED_TEMPLATE_VERSIONS[-1]
 
 # Upper bound on columns scanned when mapping the technical header row
 MAX_HEADER_SCAN_COLUMNS = 100

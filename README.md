@@ -105,6 +105,12 @@ One pipeline feeds both commands, so the outputs share ordering and
 sanitization. `update` validates the template version first, then injects
 the data with formatting cloned from the template's data rows, and saves a
 version-stamped file (e.g. `FCP_Services_Plus_File_PERFECT_v1.1-20260602.xlsx`).
+Supported template versions are 1.1-20260128 and 1.1-20260602: a
+supported-but-older template logs a warning, and anything else fails
+validation with the known list. Note: the shipped template carries 4
+DUMMY-EXAMPLE rows from row 4 — the run overwrites rows 4 onward but does
+not clear past your data, so runs with fewer than 4 items leave the
+remaining example rows in the output.
 
 ## Commands
 
@@ -159,8 +165,9 @@ docs/                   # README screenshot
 
 ## Verification
 
-- `pytest` — 41 tests covering config, data handling, rate math, logging,
-  Word document generation, and the shipped sample data.
+- `pytest` — 46 tests covering config, data handling, rate math, logging,
+  Word document generation, the shipped sample data, and the template
+  version policy.
 - Differential testing — the refactored data handler, rate calculators,
   Excel processor (via an `xlwings` stub), Word builder (byte-identical
   `document.xml`), and CLI (exit codes, single Excel session) were each run

@@ -42,7 +42,8 @@ def test_company_defaults_are_placeholders():
 
 def test_business_constants():
     assert config.IFF_RATE == 0.0075
-    assert config.EXPECTED_TEMPLATE_VERSION == "1.1-20260602"
+    assert config.SUPPORTED_TEMPLATE_VERSIONS == ("1.1-20260128", "1.1-20260602")
+    assert config.LATEST_TEMPLATE_VERSION == "1.1-20260602"
     assert config.XL_PASTE_FORMATS == -4122
     assert config.PROPOSAL_CPL_FILENAME.endswith(".docx")
     assert config.FSS_PRICELIST_FILENAME.endswith(".docx")

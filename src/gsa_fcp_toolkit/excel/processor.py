@@ -18,11 +18,12 @@ import xlwings as xw
 
 from gsa_fcp_toolkit.config import (
     DATA_START_ROW,
-    EXPECTED_TEMPLATE_VERSION,
     HEADER_ROW_TECHNICAL,
+    LATEST_TEMPLATE_VERSION,
     MAX_HEADER_SCAN_COLUMNS,
     PRICING_SHEET_NAME,
     README_SHEET_NAME,
+    SUPPORTED_TEMPLATE_VERSIONS,
     VERSION_CELL,
     XL_PASTE_FORMATS,
 )
@@ -96,13 +97,15 @@ class ExcelProcessor:
         return app, wb, ws
 
     def validate_template_version(self) -> str:
-        """Verify the template matches the expected GSA schema version.
+        """Verify the template is a version the tool knows how to handle.
 
         Returns:
-            The version string when it matches.
+            The template's version string, used to stamp the output filename.
 
         Raises:
-            ValueError: If version tracking is missing or the version mismatches.
+            ValueError: If version tracking is missing, or the version is not
+                in ``SUPPORTED_TEMPLATE_VERSIONS``. A supported-but-older
+                version logs a warning and proceeds.
         """
         _, wb, _ = self._ensure_active()
         if README_SHEET_NAME not in [s.name for s in wb.sheets]:
@@ -110,13 +113,24 @@ class ExcelProcessor:
             raise ValueError(f"Template missing version tracking on {README_SHEET_NAME} sheet.")
 
         current_version = wb.sheets[README_SHEET_NAME].range(VERSION_CELL).value
-        if current_version != EXPECTED_TEMPLATE_VERSION:
+        if current_version not in SUPPORTED_TEMPLATE_VERSIONS:
             logger.error(
-                "Template version mismatch! Expected: %s, Found: %s",
-                EXPECTED_TEMPLATE_VERSION,
+                "Template version mismatch! Found: %s, Known: %s",
                 current_version,
+                ", ".join(SUPPORTED_TEMPLATE_VERSIONS),
             )
-            raise ValueError(f"Incompatible template version: {current_version}")
+            raise ValueError(
+                f"Incompatible template version: {current_version}. "
+                f"Known versions: {', '.join(SUPPORTED_TEMPLATE_VERSIONS)}. "
+                "If GSA released a newer template, verify its Pricing layout "
+                "matches, then add its version to SUPPORTED_TEMPLATE_VERSIONS."
+            )
+        if current_version != LATEST_TEMPLATE_VERSION:
+            logger.warning(
+                "Template version %s is supported but superseded by %s.",
+                current_version,
+                LATEST_TEMPLATE_VERSION,
+            )
 
         logger.info("Verified template version: %s", current_version)
         return str(current_version)
