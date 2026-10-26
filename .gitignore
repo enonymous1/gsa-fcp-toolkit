@@ -3,15 +3,19 @@ __pycache__/
 .venv/
 .env
 *.egg-info/
-build/
-dist/
+# Generated dirs live at the repo root only, so anchor them: a bare "data/"
+# also matches src/gsa_fcp_toolkit/data/ (the DataHandler subpackage) and
+# silently keeps real source out of git -- that is what broke CI.
+/build/
+/dist/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
-# Working data and generated outputs (never committed: real business data)
-data/
-output/
+# Working data and generated outputs (never committed: real business data).
+# Anchored to the repo root (see above).
+/data/
+/output/
 *.log
 *.docx
 
