@@ -156,8 +156,38 @@ class ExcelProcessor:
         logger.debug("Mapped %d columns from template.", len(headers))
         return headers, last_index
 
+    def _last_nonempty_data_row(self, col_count: int) -> int:
+        """Last row at/after DATA_START_ROW holding any value, else DATA_START_ROW - 1.
+
+        Scans the data region in one bulk read; formatting-only rows read back
+        as None and are ignored, so the template's styled-but-empty tail does
+        not count as data.
+        """
+        _, _, ws = self._ensure_active()
+        last_row = ws.used_range.last_cell.row
+        if last_row < DATA_START_ROW:
+            return DATA_START_ROW - 1
+        expected_rows = last_row - DATA_START_ROW + 1
+        values = ws.range((DATA_START_ROW, 1), (last_row, col_count)).value
+        if not isinstance(values, list):
+            values = [[values]]
+        elif expected_rows == 1 and values and not isinstance(values[0], list):
+            # Single-row reads come back flat; treat as one row.
+            values = [values]
+        for offset in range(len(values) - 1, -1, -1):
+            row_values = values[offset]
+            if not isinstance(row_values, list):
+                row_values = [row_values]
+            if any(v is not None and str(v).strip() != "" for v in row_values):
+                return DATA_START_ROW + offset
+        return DATA_START_ROW - 1
+
     def append_data(self, labor_data: list[LaborItem], output_path: str | Path) -> None:
-        """Inject data, clone formatting, and save the resulting workbook.
+        """Inject data, clone formatting, clear stale rows, and save.
+
+        Rows the template shipped with (its example rows) that fall beyond the
+        written data are cleared, so the output contains exactly the labor
+        data fed in.
 
         Args:
             labor_data: Cleaned labor category records.
@@ -184,10 +214,32 @@ class ExcelProcessor:
 
         start_row = DATA_START_ROW
         end_row = start_row + len(rows) - 1
+
+        # Find pre-existing rows now: the write itself changes the picture,
+        # and anything still standing beyond the written data must not
+        # survive into the output (the shipped template's example rows).
+        try:
+            stale_last_row = self._last_nonempty_data_row(col_count)
+        except Exception:  # noqa: BLE001 — clearing is a nicety; never fail the run over it
+            logger.warning(
+                "Could not scan for stale rows; leaving existing rows beyond "
+                "the written data untouched."
+            )
+            stale_last_row = end_row
+
         target_range = ws.range((start_row, 1), (end_row, col_count))
 
         logger.info("Writing %d rows to Excel...", len(rows))
         target_range.value = rows
+
+        if stale_last_row > end_row:
+            ws.range((end_row + 1, 1), (stale_last_row, col_count)).clear_contents()
+            logger.info(
+                "Cleared %d stale row(s) beyond the written data (rows %d-%d).",
+                stale_last_row - end_row,
+                end_row + 1,
+                stale_last_row,
+            )
 
         self._apply_style_template(start_row, end_row)
 

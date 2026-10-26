@@ -11,8 +11,12 @@ dist/
 
 # Working data and generated outputs (never committed: real business data)
 data/
-templates/
 output/
 *.log
-*.xlsx
 *.docx
+
+# Generated workbooks anywhere except the two shipped public GSA templates
+# in templates/ (dummy example rows only, no real pricing data).
+*.xlsx
+!templates/FCP_Services_Plus_File.xlsx
+!templates/FCP_Services_Plus_File_v-1.1-20260128.xlsx

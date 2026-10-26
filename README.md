@@ -60,7 +60,7 @@ Contributors: `pip install -e ".[dev]"` adds the test and lint tooling.
 gsa-fcp cpl --input examples/sample_labor_data.json
 # writes ./output/Proposal_CPL.docx and ./output/Authorized_FSS_Pricelist.docx
 
-# With your own data and template (needs Excel, Windows/macOS)
+# With your own data (needs Excel, Windows/macOS); the template ships in templates/
 gsa-fcp update
 ```
 
@@ -107,10 +107,12 @@ the data with formatting cloned from the template's data rows, and saves a
 version-stamped file (e.g. `FCP_Services_Plus_File_PERFECT_v1.1-20260602.xlsx`).
 Supported template versions are 1.1-20260128 and 1.1-20260602: a
 supported-but-older template logs a warning, and anything else fails
-validation with the known list. Note: the shipped template carries 4
-DUMMY-EXAMPLE rows from row 4 — the run overwrites rows 4 onward but does
-not clear past your data, so runs with fewer than 4 items leave the
-remaining example rows in the output.
+validation with the known list. Both templates ship in the repo under
+templates/ (public GSA releases containing only dummy example rows). The
+run overwrites from row 4 and clears any pre-existing rows beyond the
+written data, so the output contains exactly the labor data fed in; if
+that scan fails, it logs a warning and leaves those rows untouched rather
+than failing the run.
 
 ## Commands
 
@@ -158,6 +160,7 @@ src/gsa_fcp_toolkit/
 tools/export_to_md.py   # standalone Python→Markdown documentation utility
 tests/                  # pytest suite
 examples/               # sample_labor_data.json (used by Quick start)
+templates/              # shipped GSA templates (both supported versions)
 docs/                   # README screenshot
 ```
 
@@ -165,9 +168,9 @@ docs/                   # README screenshot
 
 ## Verification
 
-- `pytest` — 46 tests covering config, data handling, rate math, logging,
-  Word document generation, the shipped sample data, and the template
-  version policy.
+- `pytest` — 54 tests covering config, data handling, rate math, logging,
+  Word document generation, the shipped sample data, the template version
+  policy, stale-row clearing, and the shipped templates.
 - Differential testing — the refactored data handler, rate calculators,
   Excel processor (via an `xlwings` stub), Word builder (byte-identical
   `document.xml`), and CLI (exit codes, single Excel session) were each run
