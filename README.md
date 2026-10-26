@@ -1,52 +1,110 @@
 # gsa-fcp-toolkit
 
-GSA Federal Supply Schedule (FSS) pricing tools: update the FCP Excel
-pricelist from labor-category JSON, and generate the Commercial Price List
-and Authorized FSS Pricelist Word documents.
+[![CI](https://github.com/enonymous1/gsa-fcp-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/enonymous1/gsa-fcp-toolkit/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+GSA Federal Supply Schedule (FSS) pricing tools for schedule holders and
+pricing analysts who maintain FSS pricelists: update the FCP Excel pricelist
+from labor-category JSON, and generate the Commercial Price List and
+Authorized FSS Pricelist Word documents from the same data.
 
 Refactored from an organically grown script collection (`ss-gsaFCP`) into an
 installable, typed, and tested package.
 
-## What it does
+![Generated Commercial Price List](docs/screenshot-cpl.png)
 
-- **`gsa-fcp update`** — Validates the GSA template version, loads
-  `labor_data.json`, sanitizes it (years-of-experience coercion, title
-  trimming) and sorts it by UCID, then injects it into the Excel template
-  with formatting cloned from the template's data rows. Output is
-  version-stamped, e.g. `FCP_Services_Plus_File_PERFECT_v1.1-20260602.xlsx`.
-  Uses [xlwings](https://www.xlwings.org/), so Excel support needs Windows
-  or macOS with Excel installed.
-- **`gsa-fcp cpl`** — Generates the Word documents: the Established
-  Commercial Price List (commercial rates) and the Authorized FSS Pricelist
-  (GSA rates including the Industrial Funding Fee), with the I-FSS-600
-  customer-information block and `[BRACKETED]` placeholders flagging entries
-  that need manual input.
+*The Proposal CPL generated from `examples/sample_labor_data.json` with
+sample company details — the rates table, qualifications, and red
+`[BRACKETED]` placeholders.*
 
-Both commands share one load → clean → sort pipeline, so the Excel and Word
-outputs can never disagree on ordering or sanitization.
+## Why
+
+Maintaining a GSA Schedule pricelist by hand means editing a versioned Excel
+template, recomputing IFF-inclusive rates, and retyping the same labor
+categories into two Word documents — and any drift between them is a
+compliance problem. `gsa-fcp-toolkit` makes one cleaned, sorted labor list
+the single source of truth and regenerates all three artifacts from it, so
+the Excel pricelist and both Word documents can never disagree on ordering,
+sanitization, or rates.
+
+## Non-goals
+
+- **Does not submit or file anything with GSA.** It prepares documents;
+  a human files them.
+- **Does not validate rates against GSA rules or audit pricing.** It checks
+  the template version and the arithmetic, not compliance.
+- **Does not replace review of `[BRACKETED]` entries.** Every placeholder
+  must be filled in by a person before use.
+- **The Excel step is not a headless Linux Excel engine.** It drives real
+  Excel via [xlwings](https://www.xlwings.org/) on Windows or macOS.
+
+## Prerequisites
+
+- Python 3.10+
+- Excel on Windows or macOS — only for `gsa-fcp update`. `gsa-fcp cpl`
+  runs anywhere, including Linux and CI.
 
 ## Install
 
 ```bash
-pip install -e ".[dev]"
+pip install -e .
 ```
 
-Requires Python 3.10+. Everything except the Excel step runs anywhere.
+Contributors: `pip install -e ".[dev]"` adds the test and lint tooling.
 
 ## Quick start
 
 ```bash
-# Working directories default to ./data, ./templates, ./output (see Configuration)
+# Works anywhere — generates both Word documents from the shipped sample data
+gsa-fcp cpl --input examples/sample_labor_data.json
+# writes ./output/Proposal_CPL.docx and ./output/Authorized_FSS_Pricelist.docx
+
+# With your own data and template (needs Excel, Windows/macOS)
 gsa-fcp update
-gsa-fcp cpl                  # both documents
-gsa-fcp cpl --type proposal  # or --type fss
 ```
 
-Or without installing:
+Or without installing: `python -m gsa_fcp_toolkit cpl --input examples/sample_labor_data.json`
 
-```bash
-python -m gsa_fcp_toolkit update
+## Worked example
+
+The sample file's Systems Engineer has no direct commercial price — both
+rates are derived:
+
+```json
+{
+  "title": "Systems Engineer",
+  "minimum_education": "Bachelor's",
+  "minimum_years_of_experience": 5,
+  "price_offered_to_gsa_excluding_iff": 135,
+  "discount_offered_to_gsa_off_commercial_price": "10%"
+}
 ```
+
+| Labor Category | Commercial | GSA (w/ IFF) |
+| -------------- | ---------: | -----------: |
+| Program Manager | $185.00 | $172.50 |
+| Systems Engineer | $150.00 | $136.02 |
+
+Systems Engineer math: $135.00 net / (1 − 10% discount) = $150.00
+commercial, and $135.00 / (1 − 0.0075 IFF) = $136.02 GSA. The Program
+Manager's rates are direct prices, used as-is.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[labor_data.json] --> B[Pipeline: load, clean, sort]
+    B --> C[gsa-fcp update: xlwings into Excel template]
+    B --> D[gsa-fcp cpl: python-docx into Word docs]
+    C --> E[version-stamped xlsx]
+    D --> F[Proposal CPL and FSS Pricelist docx]
+```
+
+One pipeline feeds both commands, so the outputs share ordering and
+sanitization. `update` validates the template version first, then injects
+the data with formatting cloned from the template's data rows, and saves a
+version-stamped file (e.g. `FCP_Services_Plus_File_PERFECT_v1.1-20260602.xlsx`).
 
 ## Commands
 
@@ -77,7 +135,8 @@ Unset company values render as red `[BRACKETED]` manual entries in the
 generated Word documents — set them to brand the output. Other business
 constants (IFF rate, document styling) live in `src/gsa_fcp_toolkit/config.py`.
 
-## Project layout
+<details>
+<summary>Project layout</summary>
 
 ```
 src/gsa_fcp_toolkit/
@@ -92,12 +151,16 @@ src/gsa_fcp_toolkit/
 └── word/               # styles.py + builder.py (Word document assembly)
 tools/export_to_md.py   # standalone Python→Markdown documentation utility
 tests/                  # pytest suite
+examples/               # sample_labor_data.json (used by Quick start)
+docs/                   # README screenshot
 ```
+
+</details>
 
 ## Verification
 
-- `pytest` — 35 tests covering config, data handling, rate math, logging,
-  and Word document generation.
+- `pytest` — 41 tests covering config, data handling, rate math, logging,
+  Word document generation, and the shipped sample data.
 - Differential testing — the refactored data handler, rate calculators,
   Excel processor (via an `xlwings` stub), Word builder (byte-identical
   `document.xml`), and CLI (exit codes, single Excel session) were each run
