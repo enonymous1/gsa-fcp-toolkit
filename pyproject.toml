@@ -14,11 +14,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Pinned exactly: CI installs these same versions, so the gate can never
+# drift from what was verified locally (an unpinned ruff once failed CI
+# on code that passed locally).
 dev = [
-    "pytest>=8",
-    "ruff>=0.8",
-    "mypy>=1.13",
-    "openpyxl>=3.1",  # shipped-template lock tests (read-only inspection)
+    "pytest==9.1.1",
+    "ruff==0.17.2",
+    "mypy==2.4.0",
+    "openpyxl==3.1.2",  # shipped-template lock tests (read-only inspection)
 ]
 
 # Console entry points (wired in Phase 7):
